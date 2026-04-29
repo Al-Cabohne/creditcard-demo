@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout – NovaBuy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f2ed;
+      --card: #ffffff;
+      --ink: #1a1612;
+      --muted: #8a847c;
+      --accent: #c8a96e;
+      --accent-dark: #a8863e;
+      --border: #e4dfd7;
+      --success: #3a7d5c;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Subtle background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle at 20% 20%, rgba(200,169,110,0.07) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(200,169,110,0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .logo span { color: var(--accent); }
+
+    .header-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-meta svg { opacity: 0.6; }
+
+    /* ── Main Layout ── */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 440px;
+      gap: 0;
+      max-width: 1100px;
+      margin: 48px auto;
+      width: 100%;
+      padding: 0 24px;
+    }
+
+    /* ── Order Summary (left) ── */
+    .summary {
+      padding: 0 48px 0 0;
+    }
+
+    .summary h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 28px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .product-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .product-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e8e0d4, #d4c9b8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .product-info { flex: 1; }
+    .product-name { font-weight: 500; font-size: 0.9rem; }
+    .product-variant { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .product-price { font-weight: 500; font-size: 0.95rem; }
+
+    .totals { margin-top: 24px; }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .total-row.final {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--ink);
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Payment Form (right) ── */
+    .payment-panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 500;
+      margin-bottom: 28px;
+      color: var(--ink);
+    }
+
+    /* Card visual preview */
+    .card-preview {
+      width: 100%;
+      height: 140px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2c2420 0%, #4a3828 50%, #6b5040 100%);
+      margin-bottom: 28px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-preview::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      background: rgba(200,169,110,0.15);
+    }
+    .card-preview::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: 20px;
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: rgba(200,169,110,0.08);
+    }
+
+    .card-chip {
+      width: 32px;
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      opacity: 0.9;
+    }
+
+    .card-bottom {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-number-display {
+      font-size: 0.95rem;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 8px;
+      font-weight: 300;
+    }
+
+    .card-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .card-label { font-size: 0.6rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.1em; }
+    .card-value { font-size: 0.8rem; color: rgba(255,255,255,0.85); font-weight: 300; margin-top: 2px; }
+
+    .card-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.05em;
+    }
+
+    /* Form fields */
+    .field-group { margin-bottom: 18px; }
+    .field-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .field-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: #faf9f7;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .field-group input::placeholder { color: #c0bab2; }
+
+    .field-group input:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(200,169,110,0.12);
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Security row */
+    .security-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 20px 0;
+    }
+    .security-note svg { flex-shrink: 0; }
+
+    /* Submit button */
+    .btn-pay {
+      width: 100%;
+      padding: 15px;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-pay::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(200,169,110,0.12));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn-pay:hover {
+      background: #2e2820;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+    .btn-pay:hover::before { opacity: 1; }
+    .btn-pay:active { transform: translateY(0); }
+
+    /* Success state */
+    .success-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      gap: 16px;
+    }
+
+    .success-overlay.visible { display: flex; }
+    .payment-panel.paid .form-content { display: none; }
+    .payment-panel.paid .success-overlay { display: flex; }
+
+    .success-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: #edf7f2;
+      display: flex; align-items: center; justify-content: center;
+      animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--ink);
+    }
+    .success-sub { font-size: 0.875rem; color: var(--muted); line-height: 1.5; }
+
+    /* Accepted cards */
+    .accepted-cards {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .card-badge {
+      width: 42px; height: 28px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--bg);
+      letter-spacing: 0.04em;
+    }
+
+    /* Steps indicator */
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 36px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .step.done .step-num { background: var(--success); color: white; }
+    .step.active .step-num { background: var(--ink); color: white; }
+    .step.inactive .step-num { background: var(--border); color: var(--muted); }
+    .step.done .step-label, .step.active .step-label { color: var(--ink); font-weight: 500; }
+    .step.inactive .step-label { color: var(--muted); }
+
+    .step-sep {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      margin: 0 12px;
+    }
+
+    /* Animations */
+    .payment-panel { animation: slideUp 0.4s ease both; }
+    .summary { animation: slideUp 0.4s 0.1s ease both; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 860px) {
+      main { grid-template-columns: 1fr; }
+      .summary { padding: 0 0 32px; order: 2; }
+      .payment-panel { order: 1; }
+      header { padding: 16px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Nova<span>Buy</span></div>
+  <div class="header-meta">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Sichere SSL-Verschlüsselung
+  </div>
+</header>
+
+<main>
+  <!-- Order Summary -->
+  <div class="summary">
+    <h2>Bestellübersicht</h2>
+
+    <div class="product-item">
+      <div class="product-thumb">👟</div>
+      <div class="product-info">
+        <div class="product-name">Sneaker Classic Edition</div>
+        <div class="product-variant">Größe 42 · Weiß/Beige</div>
+      </div>
+      <div class="product-price">€ 129,00</div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-thumb">🎒</div>
+      <div class="product-info">
+        <div class="product-name">Rucksack Urban Slim</div>
+        <div class="product-variant">Farbe: Dunkelbraun</div>
+      </div>
+      <div class="product-price">€ 89,00</div>
+    </div>
+
+    <div class="totals">
+      <div class="total-row"><span>Zwischensumme</span><span>€ 218,00</span></div>
+      <div class="total-row"><span>Versand (DHL)</span><span>€ 4,99</span></div>
+      <div class="total-row"><span>MwSt. (19 %)</span><span>€ 41,42</span></div>
+      <div class="total-row final"><span>Gesamtbetrag</span><span>€ 264,41</span></div>
+    </div>
+  </div>
+
+  <!-- Payment Panel -->
+  <div class="payment-panel" id="panel">
+    <div class="form-content">
+
+      <div class="steps">
+        <div class="step done">
+          <div class="step-num">✓</div>
+          <span class="step-label">Warenkorb</span>
+        </div>
+        <div class="step-sep"></div>
+        <div class="step done">
+          <div class="step-num">✓</div>
+          <span class="step-label">Lieferung</span>
+        </div>
+        <div class="step-sep"></div>
+        <div class="step active">
+          <div class="step-num">3</div>
+          <span class="step-label">Zahlung</span>
+        </div>
+      </div>
+
+      <div class="panel-title">Kreditkartendaten</div>
+
+      <form id="paymentForm" action="#" method="post" autocomplete="on">
+
+      <!-- Live card preview -->
+      <div class="card-preview" id="cardPreview">
+        <div class="card-chip"></div>
+        <div class="card-bottom">
+          <div class="card-number-display" id="dispNumber">•••• •••• •••• ••••</div>
+          <div class="card-meta-row">
+            <div>
+              <div class="card-label">Karteninhaber</div>
+              <div class="card-value" id="dispName">Vor- und Nachname</div>
+            </div>
+            <div>
+              <div class="card-label">Gültig bis</div>
+              <div class="card-value" id="dispExpiry">MM / JJ</div>
+            </div>
+            <div class="card-brand" id="dispBrand">VISA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cardholder Name -->
+      <div class="field-group">
+        <label>Karteninhaber</label>
+        <input
+          type="text"
+          id="cardName"
+          name="cardName"
+          autocomplete="cc-name"
+          placeholder="Max Mustermann"
+          oninput="updateCard()"
+        />
+      </div>
+
+      <!-- Card Number -->
+      <div class="field-group">
+        <label>Kartennummer</label>
+        <input
+          type="text"
+          id="cardNumber"
+          name="cardNumber"
+          autocomplete="cc-number"
+          placeholder="1234 5678 9012 3456"
+          maxlength="19"
+          oninput="formatCardNumber(this); updateCard()"
+        />
+      </div>
+
+      <!-- Expiry + CVV -->
+      <div class="two-col">
+        <div class="field-group">
+          <label>Ablaufdatum</label>
+          <input
+            type="text"
+            id="cardExpiry"
+            name="cardExpiry"
+            autocomplete="cc-exp"
+            placeholder="MM / JJ"
+            maxlength="7"
+            oninput="formatExpiry(this); updateCard()"
+          />
+        </div>
+        <div class="field-group">
+          <label>CVV / CVC</label>
+          <input
+            type="text"
+            id="cardCvv"
+            name="cardCvv"
+            autocomplete="cc-csc"
+            placeholder="123"
+            maxlength="4"
+          />
+        </div>
+      </div>
+
+      <div class="security-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3a7d5c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Deine Zahlungsdaten sind SSL-verschlüsselt und sicher.
+      </div>
+
+      <button type="submit" class="btn-pay" onclick="handlePay(); return false;">
+        Jetzt € 264,41 bezahlen
+      </button>
+
+      </form>
+
+      <div class="accepted-cards">
+        <div class="card-badge">VISA</div>
+        <div class="card-badge">MC</div>
+        <div class="card-badge">AMEX</div>
+        <div class="card-badge">PAYPAL</div>
+      </div>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-overlay" id="successMsg">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3a7d5c" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-title">Zahlung erfolgreich!</div>
+      <div class="success-sub">Vielen Dank für deine Bestellung.<br>Eine Bestätigung wurde per E-Mail gesendet.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+  function formatCardNumber(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 16);
+    input.value = v.match(/.{1,4}/g)?.join(' ') || v;
+  }
+
+  function formatExpiry(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 4);
+    if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+    input.value = v;
+  }
+
+  function detectBrand(num) {
+    num = num.replace(/\s/g, '');
+    if (/^4/.test(num)) return 'VISA';
+    if (/^5[1-5]/.test(num)) return 'MASTERCARD';
+    if (/^3[47]/.test(num)) return 'AMEX';
+    return 'VISA';
+  }
+
+  function updateCard() {
+    const num = document.getElementById('cardNumber').value || '•••• •••• •••• ••••';
+    const name = document.getElementById('cardName').value || 'Vor- und Nachname';
+    const exp = document.getElementById('cardExpiry').value || 'MM / JJ';
+
+    document.getElementById('dispNumber').textContent = num || '•••• •••• •••• ••••';
+    document.getElementById('dispName').textContent = name;
+    document.getElementById('dispExpiry').textContent = exp;
+    document.getElementById('dispBrand').textContent = detectBrand(num);
+  }
+
+  function handlePay() {
+    const panel = document.getElementById('panel');
+    panel.classList.add('paid');
+  }
+</script>
+
+</body>
+</html>
